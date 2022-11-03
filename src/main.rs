@@ -27,12 +27,17 @@ impl App {
 
     fn render_update(&mut self, args: &RenderArgs) {
         use graphics::*;
-        self.gl.draw(args.viewport(), |c, gl| {clear([0.0, 0.0, 0.0, 1.0], gl);});
+
 
         self.gl.draw(args.viewport(), |c, gl| {
-                rectangle([1.0, 1.0, 1.0, 1.0],[0.0, 0.0, 50.0, 50.0],c.transform
-                    .trans(0.0, 0.0),gl,);});
+            
+            clear([0.0, 0.0, 0.0, 1.0], gl);
 
+            rectangle([1.0, 1.0, 1.0, 1.0],[0.0, 0.0, 50.0, 50.0],c.transform,gl,);
+
+        
+        });
+        
         { //FPS//
             match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
                 Ok(n) => {
