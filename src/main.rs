@@ -7,10 +7,11 @@ use std::time::SystemTime;
 
 use piston::window::WindowSettings;
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{Button, Key, PressEvent, ReleaseEvent, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::input::{Button, Key, PressEvent, ReleaseEvent, RenderArgs, RenderEvent};
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
+mod neuralnetwork;
 
 pub struct App {
     gl: GlGraphics,
@@ -27,15 +28,15 @@ impl App {
 
     fn render_update(&mut self, args: &RenderArgs) {
         use graphics::*;
-
-
         self.gl.draw(args.viewport(), |c, gl| {
-            
             clear([0.0, 0.0, 0.0, 1.0], gl);
 
-            rectangle([1.0, 1.0, 1.0, 1.0],[0.0, 0.0, 50.0, 50.0],c.transform,gl,);
 
-        
+            let network = neuralnetwork::Network::new(2, 2);
+
+            println!("{:?}", network);
+
+            rectangle([1.0, 1.0, 1.0, 1.0],[0.0, 0.0, 50.0, 50.0],c.transform,gl,);
         });
         
         { //FPS//
@@ -62,7 +63,7 @@ impl App {
 
     fn press(&mut self, args: &Button) {
 
-        let x:bool = true;
+        //let x:bool = true;
         
         if let &Button::Keyboard(key) = args {
             match key {
@@ -74,7 +75,7 @@ impl App {
 
     fn release(&mut self, args: &Button) {
 
-        let x:bool = false;
+        //let x:bool = false;
         
         if let &Button::Keyboard(key) = args {
             match key {
