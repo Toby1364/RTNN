@@ -68,6 +68,9 @@ impl Neuron {
     pub fn new() -> Neuron {
         let functions: Vec<String> = vec![
         String::from("ADD"),
+        String::from("SUB"),
+        String::from("CNST"),
+        String::from("NCNST"),
         ];
 
         let mut rng = rand::thread_rng();
@@ -129,16 +132,41 @@ impl Network {
                 if 5 > rng.gen_range(0..100) as u8 {
                     let mutiplayer = rng.gen_range(-0.5..0.5);
                     let len = self.neurons[i].multiplayers.len();
-
-                    self.neurons[i].multiplayers[rng.gen_range(0..len)] += mutiplayer;
+                    if len > 0 {
+                        self.neurons[i].multiplayers[rng.gen_range(0..len)] += mutiplayer;
+                    }
                 }
             }
             i += 1;
         }
     }
     pub fn update(&mut self) {
+        let fake_n = self.neurons.clone();
+
         for neuron in &mut self.neurons {
-            match neuron.function {
+            match neuron.function.as_str() {
+                "ADD" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += fake_n[neuron.conections[i]].value * neuron.multiplayers[i];
+                        i += 1;
+                    }
+                }
+                "SUB" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += fake_n[neuron.conections[i]].value * neuron.multiplayers[i];
+                        i += 1;
+                    }
+                }
+                "CNST" => {
+                    neuron.value = 1.0;
+                }
+                "NCNST" => {
+                    neuron.value = -1.0;
+                }
 
                 _ => {}
             }
