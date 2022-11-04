@@ -1,13 +1,13 @@
-use std::fmt;
+//use std::fmt;
 use rand::Rng;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Neuron {
-    value: f64,
-    function: String,
-    conections: Vec<usize>,
-    multiplayers: Vec<f64>,
-    mutable: bool,
+    pub value: f64,
+    pub function: String,
+    pub conections: Vec<usize>,
+    pub multiplayers: Vec<f64>,
+    pub mutable: bool,
 }
 
 /*impl fmt::Debug for Neuron {
@@ -82,9 +82,9 @@ impl Neuron {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Network {
-    neurons: Vec<Neuron>,
+    pub neurons: Vec<Neuron>,
 }
 
 impl Network {
@@ -107,6 +107,41 @@ impl Network {
         return Network{neurons};
     }
     pub fn mutate(&mut self) {
-        
+        let mut rng = rand::thread_rng();
+
+        if 15 > rng.gen_range(0..100) as u8 {
+            self.neurons.push(Neuron::new());
+        }
+
+        let n_count = self.neurons.len();
+
+        let mut i = 0;
+        while i < n_count {
+            if self.neurons[i].mutable {
+                if 5 > rng.gen_range(0..100) as u8 {
+                    let mut index = rng.gen_range(0..n_count);
+                    while index == i {
+                        index = rng.gen_range(0..n_count);
+                    }
+                    self.neurons[i].conections.push(index);
+                    self.neurons[i].multiplayers.push(1.0);
+                }
+                if 5 > rng.gen_range(0..100) as u8 {
+                    let mutiplayer = rng.gen_range(-0.5..0.5);
+                    let len = self.neurons[i].multiplayers.len();
+
+                    self.neurons[i].multiplayers[rng.gen_range(0..len)] += mutiplayer;
+                }
+            }
+            i += 1;
+        }
+    }
+    pub fn update(&mut self) {
+        for neuron in &mut self.neurons {
+            match neuron.function {
+
+                _ => {}
+            }
+        }
     }
 }
