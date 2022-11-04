@@ -12,6 +12,7 @@ use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
 mod neuralnetwork;
+mod creature;
 
 pub struct App {
     gl: GlGraphics,
@@ -31,12 +32,19 @@ impl App {
         self.gl.draw(args.viewport(), |c, gl| {
             clear([0.0, 0.0, 0.0, 1.0], gl);
 
+            let creature = creature::Creature::new(2, 2);
 
-            let network = neuralnetwork::Network::new(2, 2);
+            rectangle(
+                [1.0, 1.0, 1.0, 1.0],
+                [0.0, 0.0, 50.0, 50.0],
+                c.transform.trans(
+                    0.0, 
+                    0.0),
+                gl,
+            );
+            
 
-            println!("{:?}", network);
-
-            rectangle([1.0, 1.0, 1.0, 1.0],[0.0, 0.0, 50.0, 50.0],c.transform,gl,);
+            
         });
         
         { //FPS//
@@ -88,7 +96,7 @@ impl App {
 
 fn main() {
 
-    let mut window: GlutinWindow = WindowSettings::new("Draw", [500.0, 500.0])
+    let mut window: GlutinWindow = WindowSettings::new("RTNN", [1500.0, 1000.0])
         .exit_on_esc(true)
         .build()
         .unwrap();
