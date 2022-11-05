@@ -1,7 +1,7 @@
 use crate::neuralnetwork;
 use rand::Rng;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Creature {
     pub network: neuralnetwork::Network,
     pub body: [[u8; 8]; 8],
@@ -17,18 +17,30 @@ impl Creature {
             network: neuralnetwork::Network::new(inputs, outputs),
             body: 
             [
-                [1, 0, 0, 0, 0, 0, 0, 1],
                 [0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
             ],
-            x: rng.gen_range(0..50) as f64,
-            y: rng.gen_range(0..30) as f64,
-            energy: 20.0,
+            x: rng.gen_range(200..300) as f64,
+            y: rng.gen_range(200..300) as f64,
+            energy: 9.0,
+        }
+    }
+    pub fn mutate(&mut self, num_of_mutations: usize) {
+        self.network.mutate(num_of_mutations);
+        let mut rng = rand::thread_rng();
+
+        let mut i = 0;
+        while i < num_of_mutations {
+            if 5 > rng.gen_range(0..100) as u8 {
+                self.body[rng.gen_range(0..8)][rng.gen_range(0..8)] = rng.gen_range(0..6);
+            }
+            i += 1;
         }
     }
 }

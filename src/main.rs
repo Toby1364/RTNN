@@ -12,6 +12,7 @@ use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
 use rand::Rng;
+use std::{thread, time};
 
 mod neuralnetwork;
 mod creature;
@@ -20,7 +21,24 @@ pub struct App {
     gl: GlGraphics,
 
     creatures: Vec<creature::Creature>,
-    food: [[bool; 30]; 50],
+    food: [[bool; 500]; 500],
+    food_spawn: u8,
+
+    cam_x: f64,
+    cam_y: f64,
+
+    zoom: f64,
+
+    plus: bool,
+    minus: bool,
+
+    w: bool,
+    a: bool,
+    s: bool,
+    d: bool,
+
+    up: bool,
+    down: bool,
 
     time: f64,
     mtime: f64,
@@ -35,6 +53,27 @@ impl App {
     fn render_update(&mut self, args: &RenderArgs) {
         use graphics::*;
 
+        { //Cam//
+            if self.w {
+                self.cam_y += 100.0 / self.delta;
+            }
+            if self.s {
+                self.cam_y -= 100.0 / self.delta;
+            }
+            if self.a {
+                self.cam_x += 100.0 / self.delta;
+            }
+            if self.d {
+                self.cam_x -= 100.0 / self.delta;
+            }
+            if self.plus {
+                self.zoom += (0.5 / self.delta) * (self.zoom / 10.0);
+            }
+            if self.minus {
+                self.zoom -= (0.5 / self.delta) * (self.zoom / 10.0);
+            }
+        }
+
         { //Render//
             self.gl.draw(args.viewport(), |c, gl| {
                 clear([0.0, 0.0, 0.0, 1.0], gl);
@@ -47,15 +86,19 @@ impl App {
                             let mut color = [0.0, 0.0, 0.0, 0.0];
                             match cr.body[y][x] {
                                 1 => {color = [1.0, 1.0, 1.0, 1.0]}
+                                2 => {color = [1.0, 1.0, 0.0, 1.0]}
+                                3 => {color = [1.0, 0.0, 1.0, 1.0]}
+                                4 => {color = [0.0, 1.0, 1.0, 1.0]}
+                                5 => {color = [1.0, 0.0, 0.0, 1.0]}
                                 _ => {}
                             }
 
                             rectangle(
                                 color,
-                                [0.0, 0.0, 4.0, 4.0],
+                                [self.cam_x, self.cam_y, 4.0 * self.zoom, 4.0 * self.zoom],
                                 c.transform.trans(
-                                    (4.0 * x as f64) + (32.0 * cr.x), 
-                                    (4.0 * y as f64) + (32.0 * cr.y)),
+                                    ((4.0 * x as f64) + (32.0 * cr.x)) * self.zoom, 
+                                    ((4.0 * y as f64) + (32.0 * cr.y)) * self.zoom),
                                 gl,
                             );
 
@@ -66,16 +109,16 @@ impl App {
                 }  
             
                 let mut x = 0;
-                while x < 50 {
+                while x < 500 {
                     let mut y = 0;
-                    while y < 30 {
+                    while y < 500 {
                         if self.food[x][y] {
                             rectangle(
                                 [0.0, 1.0, 0.0, 1.0],
-                                [8.0, 8.0, 8.0, 8.0],
+                                [16.0 + self.cam_x, 16.0 + self.cam_y, 8.0 * self.zoom, 8.0 * self.zoom],
                                 c.transform.trans(
-                                    32.0 * x as f64, 
-                                    32.0 * y as f64),
+                                    (32.0 * x as f64) * self.zoom, 
+                                    (32.0 * y as f64) * self.zoom),
                                 gl,
                             );
                         }
@@ -93,24 +136,81 @@ impl App {
                     cr.energy += 3.0;
                 }
 
-                if cr.x > 0.0  && self.food[cr.x as usize - 1][cr.y as usize] {cr.network.neurons[0].value = 1.0}
-                if cr.x < 49.0 && self.food[cr.x as usize + 1][cr.y as usize] {cr.network.neurons[1].value = 1.0}
-                if cr.y > 0.0  &&self.food[cr.x as usize][cr.y as usize - 1] {cr.network.neurons[2].value = 1.0}
-                if cr.y < 29.0 && self.food[cr.x as usize][cr.y as usize + 1] {cr.network.neurons[3].value = 1.0}
+                let mut index = 0;
+                let mut x = 0;
+                let mut y = 0;
+                while y < 8 {
+                    while x < 8 {
 
-                if cr.network.neurons[4].value > 0.9 && cr.x < 49.0 {cr.x += 1.0}
-                if cr.network.neurons[5].value > 0.9 && cr.x > 0.0 {cr.x -= 1.0}
-                if cr.network.neurons[6].value > 0.9 && cr.y < 29.0 {cr.y += 1.0}
-                if cr.network.neurons[7].value > 0.9 && cr.y > 0.0 {cr.y -= 1.0}
+                        match cr.body[y][x] {
+                            2 => {
+                                if cr.x > 0.0 && self.food[cr.x as usize - 1][cr.y as usize] {cr.network.neurons[index].value = 1.0}
+                            }
+                            3 => {
+                                if cr.x < 499.0 && self.food[cr.x as usize + 1][cr.y as usize] {cr.network.neurons[index].value = 1.0}
+                            }
+                            4 => {
+                                if cr.y > 0.0 && self.food[cr.x as usize][cr.y as usize - 1] {cr.network.neurons[index].value = 1.0}
+                            }
+                            5 => {
+                                if cr.y < 499.0 && self.food[cr.x as usize][cr.y as usize + 1] {cr.network.neurons[index].value = 1.0}
+                            }
+                            _ => {}
+                        }
+
+                        x += 1;
+                        index += 1;
+                    }
+                    y += 1;
+                }
+
+                cr.network.neurons[64].value = cr.x;
+                cr.network.neurons[65].value = cr.y;
+
+                if cr.network.neurons[66].value > 0.0 && cr.x < 499.0 {cr.x += 1.0}
+                if cr.network.neurons[66].value < 0.0 && cr.x > 0.0 {cr.x -= 1.0}
+                if cr.network.neurons[67].value > 0.0 && cr.y < 499.0 {cr.y += 1.0}
+                if cr.network.neurons[67].value < 0.0 && cr.y > 0.0 {cr.y -= 1.0}
+
+                cr.energy -= 0.05;
+
+                cr.network.update();
             }
 
-            self.creatures[0].network.update();
+            let mut i = 0;
 
+            while i < self.creatures.len() {
+                if self.creatures[i].energy >= 10.0 {
+                    self.creatures[i].energy -= 10.0;
+                    let mut cr = self.creatures[i].clone();
+                    cr.mutate(1);
+                    self.creatures.push(cr);
+                }
+
+                if self.creatures[i].energy <= 0.0 {
+                    self.creatures.remove(i);
+                }
+
+                i += 1;
+            }
+            
             //println!("{:#?}", &self.creatures[0]);
 
             let mut rng = rand::thread_rng();
-            while 0 == rng.gen_range(0..2) {
-                self.food[rng.gen_range(0..50)][rng.gen_range(0..30)] = true;
+            let mut i = 0;
+            while i < self.food_spawn {
+                self.food[rng.gen_range(200..300)][rng.gen_range(200..300)] = true;
+                i += 1;
+            }
+            //thread::sleep(time::Duration::from_millis(100));
+
+            if self.up {
+                self.up = false;
+                self.food_spawn += 1;
+            }
+            if self.down {
+                self.down = false;
+                self.food_spawn -= 1;
             }
         }
         
@@ -118,7 +218,7 @@ impl App {
             match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
                 Ok(n) => {
                     self.time = n.as_secs() as f64;
-                    self.mtime = (n.as_secs() * 1000 + n.subsec_nanos() as u64 / 1_000_000) as f64;
+                    self.mtime = (n.as_secs() * 500 + n.subsec_nanos() as u64 / 1_000_000) as f64;
                 }
                 Err(_) => panic!("SystemTime before UNIX EPOCH!"),
             }
@@ -138,11 +238,18 @@ impl App {
 
     fn press(&mut self, args: &Button) {
 
-        //let x:bool = true;
+        let x:bool = true;
         
         if let &Button::Keyboard(key) = args {
             match key {
-                Key::W => {}
+                Key::Up => {self.up = x}
+                Key::Down => {self.down = x}
+                Key::W => {self.w = x}
+                Key::A => {self.a = x}
+                Key::S => {self.s = x}
+                Key::D => {self.d = x}
+                Key::NumPadPlus => {self.plus = x}
+                Key::NumPadMinus => {self.minus = x}
                 _=>{}
             }
         }
@@ -150,11 +257,18 @@ impl App {
 
     fn release(&mut self, args: &Button) {
 
-        //let x:bool = false;
+        let x:bool = false;
         
         if let &Button::Keyboard(key) = args {
             match key {
-                Key::W => {}
+                Key::Up => {self.up = x}
+                Key::Down => {self.down = x}
+                Key::W => {self.w = x}
+                Key::A => {self.a = x}
+                Key::S => {self.s = x}
+                Key::D => {self.d = x}
+                Key::NumPadPlus => {self.plus = x}
+                Key::NumPadMinus => {self.minus = x}
                 _=>{}
             }
         }
@@ -170,21 +284,40 @@ fn main() {
 
     let opengl = OpenGL::V3_2;
 
-    let mut creatures = vec![
-        creature::Creature::new(4, 4),
-    ];
+    let mut creatures = vec![];
 
     let mut i = 0;
-    while i < 20 {
-        creatures[0].network.mutate();
+    while i < 2000 {
+        creatures.push(creature::Creature::new(66, 2));
         i += 1;
+    }
+
+    for creature in &mut creatures {
+        creature.mutate(200);
     }
     
     let mut app = App {
         gl: GlGraphics::new(opengl),
 
         creatures,
-        food: [[false; 30]; 50],
+        food: [[false; 500]; 500],
+        food_spawn: 30,
+
+        cam_x: -3500.0,
+        cam_y: -3500.0,
+
+        zoom: 0.5,
+
+        plus: false,
+        minus: false,
+
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+
+        up:false,
+        down: false,
 
         time: 0.0,
         mtime: 0.0,

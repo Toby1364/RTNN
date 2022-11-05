@@ -69,8 +69,12 @@ impl Neuron {
         let functions: Vec<String> = vec![
         String::from("ADD"),
         String::from("SUB"),
-        String::from("CNST"),
-        String::from("NCNST"),
+        String::from("NADD"),
+        String::from("NSUB"),
+        String::from("ABSLT"),
+        String::from("SIN"),
+        String::from("COS"),
+        String::from("TAN"),
         ];
 
         let mut rng = rand::thread_rng();
@@ -103,41 +107,55 @@ impl Network {
         }
         i = 0;
         while i < outputs {
-            neurons.push(Neuron::new());
+            let mut neuron = Neuron::new();
+            neuron.function = "ADD".to_owned();
+            neurons.push(neuron);
             i += 1;
         }
 
         return Network{neurons};
     }
-    pub fn mutate(&mut self) {
-        let mut rng = rand::thread_rng();
+    pub fn mutate(&mut self, num_of_mutations: usize) {
+        let mut iter = 0;
+        while iter < num_of_mutations {
+            let mut rng = rand::thread_rng();
 
-        if 15 > rng.gen_range(0..100) as u8 {
-            self.neurons.push(Neuron::new());
-        }
-
-        let n_count = self.neurons.len();
-
-        let mut i = 0;
-        while i < n_count {
-            if self.neurons[i].mutable {
-                if 5 > rng.gen_range(0..100) as u8 {
-                    let mut index = rng.gen_range(0..n_count);
-                    while index == i {
-                        index = rng.gen_range(0..n_count);
-                    }
-                    self.neurons[i].conections.push(index);
-                    self.neurons[i].multiplayers.push(1.0);
-                }
-                if 5 > rng.gen_range(0..100) as u8 {
-                    let mutiplayer = rng.gen_range(-0.5..0.5);
-                    let len = self.neurons[i].multiplayers.len();
-                    if len > 0 {
-                        self.neurons[i].multiplayers[rng.gen_range(0..len)] += mutiplayer;
-                    }
-                }
+            if 15 > rng.gen_range(0..100) as u8 {
+                self.neurons.push(Neuron::new());
             }
-            i += 1;
+
+            let n_count = self.neurons.len();
+
+            let mut i = 0;
+            while i < n_count {
+                if self.neurons[i].mutable {
+                    if 5 > rng.gen_range(0..100) as u8 {
+                        let mut index = rng.gen_range(0..n_count);
+                        while index == i {
+                            index = rng.gen_range(0..n_count);
+                        }
+                        self.neurons[i].conections.push(index);
+                        self.neurons[i].multiplayers.push(1.0);
+                    }
+                    if 5 > rng.gen_range(0..100) as u8 {
+                        let mutiplayer = rng.gen_range(-0.5..0.5);
+                        let len = self.neurons[i].multiplayers.len();
+                        if len > 0 {
+                            self.neurons[i].multiplayers[rng.gen_range(0..len)] += mutiplayer;
+                        }
+                    }
+                    if 5 > rng.gen_range(0..100) as u8 {
+                        let len = self.neurons[i].conections.len();
+                        if len > 0 {
+                            let index = rng.gen_range(0..len);
+                            self.neurons[i].conections.remove(index);
+                            self.neurons[i].multiplayers.remove(index);
+                        }
+                    }
+                }
+                i += 1;
+            }
+            iter += 1
         }
     }
     pub fn update(&mut self) {
@@ -153,6 +171,15 @@ impl Network {
                         i += 1;
                     }
                 }
+                "NADD" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += fake_n[neuron.conections[i]].value * neuron.multiplayers[i];
+                        i += 1;
+                    }
+                    neuron.value *= -1.0;
+                }
                 "SUB" => {
                     neuron.value = 0.0;
                     let mut i = 0;
@@ -161,11 +188,49 @@ impl Network {
                         i += 1;
                     }
                 }
-                "CNST" => {
-                    neuron.value = 1.0;
+                "NSUB" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += fake_n[neuron.conections[i]].value * neuron.multiplayers[i];
+                        i += 1;
+                    }
+                    neuron.value *= -1.0;
                 }
-                "NCNST" => {
-                    neuron.value = -1.0;
+                "ABSLT" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += fake_n[neuron.conections[i]].value * neuron.multiplayers[i];
+                        i += 1;
+                    }
+                    if neuron.value < 0.0 {
+                        neuron.value *= -1.0;
+                    }
+                }
+                "SIN" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += (fake_n[neuron.conections[i]].value * neuron.multiplayers[i]).sin();
+                        i += 1;
+                    }
+                }
+                "COS" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += (fake_n[neuron.conections[i]].value * neuron.multiplayers[i]).cos();
+                        i += 1;
+                    }
+                }
+                "TAN" => {
+                    neuron.value = 0.0;
+                    let mut i = 0;
+                    while i < neuron.conections.len() {
+                        neuron.value += (fake_n[neuron.conections[i]].value * neuron.multiplayers[i]).tan();
+                        i += 1;
+                    }
                 }
 
                 _ => {}
